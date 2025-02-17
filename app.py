@@ -10,14 +10,18 @@ app = Flask(__name__)
 
 def download_video(video_url):
     """
-    Скачивает видео по ссылке video_url с наилучшим качеством и возвращает имя файла.
+    Скачивает видео по ссылке video_url с наилучшим качеством, пытаясь избежать перекодировки,
+    и возвращает имя файла.
     """
     try:
         ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',  # выбираем наилучшие видео и аудио потоки
-            'outtmpl': 'downloads/%(title)s.%(ext)s',  # сохраняем файл в папку downloads
+            # Выбираем наилучшие видео и аудио потоки в формате mp4 и m4a
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4',
+            'outtmpl': 'downloads/%(title)s.%(ext)s',
             'quiet': True,
-            'merge_output_format': 'mp4',  # объединяем потоки в mp4
+            'merge_output_format': 'mp4',  # объединяем в mp4
+            # Передаем аргументы для ffmpeg, чтобы попробовать выполнить копирование потоков без перекодировки
+            'postprocessor_args': ['-c', 'copy']
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             # Скачиваем видео
@@ -60,7 +64,7 @@ def download_and_return():
             'downloads',
             filename,
             as_attachment=True,
-            download_name=filename  # для Flask 2.2+ параметр для имени файла
+            download_name=filename  # Flask 2.2+ параметр для имени файла
         )
     except Exception as e:
         print("Ошибка отправки файла:", e)
