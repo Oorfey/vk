@@ -1,6 +1,6 @@
 import os
 import yt_dlp
-from flask import Flask, request, send_from_directory, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import urllib.parse
 
 # Создаем папку для хранения видео, если её нет
@@ -10,12 +10,14 @@ app = Flask(__name__)
 
 def download_video(video_url):
     """
-    Скачивает видео по ссылке video_url и возвращает имя файла.
+    Скачивает видео по ссылке video_url с наилучшим качеством и возвращает имя файла.
     """
     try:
         ydl_opts = {
-            'outtmpl': 'downloads/%(title)s.%(ext)s',
+            'format': 'bestvideo+bestaudio/best',  # выбираем наилучшие видео и аудио потоки
+            'outtmpl': 'downloads/%(title)s.%(ext)s',  # сохраняем файл в папку downloads
             'quiet': True,
+            'merge_output_format': 'mp4',  # объединяем потоки в mp4
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             # Скачиваем видео
@@ -53,15 +55,12 @@ def download_and_return():
     if not filename:
         return jsonify({"error": "Error downloading video"}), 500
 
-    # Здесь можно при желании закодировать имя файла, если это требуется
-    # safe_filename = urllib.parse.quote(filename)
-
     try:
         return send_from_directory(
             'downloads',
             filename,
             as_attachment=True,
-            download_name=filename  # Flask 2.2+ параметр для имени файла
+            download_name=filename  # для Flask 2.2+ параметр для имени файла
         )
     except Exception as e:
         print("Ошибка отправки файла:", e)
