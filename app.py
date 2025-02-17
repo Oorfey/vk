@@ -1,6 +1,6 @@
 import os
 import yt_dlp
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, send_from_directory, jsonify
 import urllib.parse
 
 # Создаем папку для хранения видео, если её нет
@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 def download_video(video_url):
     """
-    Скачивает видео по ссылке video_url и возвращает имя файла (например, "Clip by @novosibka.mp4").
+    Скачивает видео по ссылке video_url и возвращает имя файла.
     """
     try:
         ydl_opts = {
@@ -33,14 +33,10 @@ def download_video(video_url):
 @app.route('/download', methods=['POST'])
 def download_and_return():
     """
-    Endpoint принимает POST-запрос на URL:
-      https://vk-flask-api.onrender.com/download
-    Заголовки должны содержать:
-      Orfey: Orfey
-    Тело запроса должно быть в формате JSON:
-      { "url": "https://vk.com/clip-..." }
-      
-    После проверки авторизации и наличия ссылки, видео скачивается и сразу возвращается в ответе.
+    Принимает POST-запрос с заголовком авторизации и JSON-телом:
+      Headers: Orfey: Orfey
+      Body (JSON): { "url": "https://vk.com/clip-..." }
+    Скачивает видео и сразу возвращает файл в ответе.
     """
     # Проверка авторизации через заголовок
     auth = request.headers.get('Orfey')
@@ -57,13 +53,15 @@ def download_and_return():
     if not filename:
         return jsonify({"error": "Error downloading video"}), 500
 
+    # Здесь можно при желании закодировать имя файла, если это требуется
+    # safe_filename = urllib.parse.quote(filename)
+
     try:
-        # Используем download_name вместо attachment_filename для Flask >= 2.2
         return send_from_directory(
             'downloads',
             filename,
             as_attachment=True,
-            download_name=filename
+            download_name=filename  # Flask 2.2+ параметр для имени файла
         )
     except Exception as e:
         print("Ошибка отправки файла:", e)
