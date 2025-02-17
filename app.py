@@ -1,6 +1,6 @@
 import os
 import yt_dlp
-from flask import Flask, request, jsonify, send_from_directory, abort
+from flask import Flask, request, jsonify, send_from_directory
 import urllib.parse
 
 # Создаем папку для хранения видео, если её нет
@@ -57,14 +57,13 @@ def download_and_return():
     if not filename:
         return jsonify({"error": "Error downloading video"}), 500
 
-    # Отдаем файл из папки downloads.
-    # Flask корректно работает с именами файлов, даже если они содержат пробелы или специальные символы.
     try:
+        # Используем download_name вместо attachment_filename для Flask >= 2.2
         return send_from_directory(
             'downloads',
             filename,
             as_attachment=True,
-            attachment_filename=filename  # для Flask 2.2+ можно использовать download_name=filename
+            download_name=filename
         )
     except Exception as e:
         print("Ошибка отправки файла:", e)
